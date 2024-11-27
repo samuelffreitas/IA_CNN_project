@@ -40,6 +40,6 @@ pip install -r requirements.txt
 - Avaliação: A rede é avaliada tendo em conta a medida de acurácia.
   
 ## 📋 Resultados
-- Acurácia no Conjunto de Teste ~= 90.0%.
+- Acurácia no Conjunto de Teste ~= 91.44 %.
 
 A rede consegue identificar com sucesso os sinais de trânsito do tipo STOP.
