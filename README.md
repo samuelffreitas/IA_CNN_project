@@ -3,7 +3,9 @@
 Um projeto de machine learning para classificar sinais de trânsito usando uma rede neural convolucional (CNN), baseado no dataset German Traffic Sign Recognition Benchmark (GTSRB).
 
 ## 📖 Visão Geral do Projeto
-Este projeto utiliza redes neurais convolucionais para reconhecer e classificar sinais de trânsito. A abordagem combina técnicas de pré-processamento de imagens e treinamento de uma CNN para identificar padrões e realizar a classificação de forma precisa.
+Este projeto utiliza redes neurais convolucionais para reconhecer e classificar sinais de trânsito. São utilizadas técnicas de pré-processamento de imagens e treinamento de uma CNN para identificar padrões e realizar a classificação de forma precisa. Para além da classificação do sinal de trânsito de STOP, 
+este projeto tem como objetivo o estudo de técnicas de visão computacional, como o modelo da rede neural convolucional, e tecnologias relacionados ao
+campo, como o OpenCV.
 
  ## ⚙️ Instalação
 Clone o repositório:
