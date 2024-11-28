@@ -101,7 +101,7 @@ The model successfully identifies STOP signs from the dataset, making it suitabl
 ## 📂 Directory Structure
 
 ```
-KNN_Bitcoin-Heist/
+IA_CNN_project/
 ├── .gitignore               # Specifies files and directories to ignore in version control
 ├── DatasetReference.bib     # Bibliography reference for the dataset
 ├── README.md                # Project documentation
