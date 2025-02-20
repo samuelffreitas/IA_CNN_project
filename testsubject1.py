@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -6,12 +7,39 @@ import cv2
 import keras
 from keras import utils as np_utils
 from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, InputLayer
+from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout, InputLayer
 from sklearn.utils.class_weight import compute_class_weight
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-# --- Data Preprocessing ---
+# Read the labels in the Test CSV
+df = pd.read_csv('./data/Test.csv')
+
+# Print the column names to check the correct column name for filenames
+print("Columns in CSV:", df.columns)
+
+# Clean up column names to strip any leading/trailing spaces
+df.columns = df.columns.str.strip()
+
+# Drop unnecessary columns (if applicable)
+df = df.drop(columns=['Width', 'Height', 'Roi.X1', 'Roi.X2', 'Roi.Y2', 'Roi.Y1'], axis=1)
+
+# Extract labels (assuming 'ClassId' is the correct column for labels)
+test_labels = df['ClassId'].to_numpy()
+
+# Ensure labels are correctly extracted
+print("Test labels loaded:", test_labels)
+print("Test labels shape:", test_labels.shape)
+
+# Ensure the test_labels array is not empty before processing
+if test_labels.size == 0:
+    print("Error: No labels found in test data.")
+else:
+    # Flatten the labels if needed (and ensure they are within the valid range)
+    test_labels = test_labels.flatten()
+    print("Flattened test labels:", test_labels[:10])  # Print the first 10 labels for sanity check
+
+# --- Data Preprocessing Functions ---
 # Apply red filter to isolate red regions (for Stop Sign)
 def apply_red_filter(image):
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -29,7 +57,7 @@ def apply_edge_detection(image):
     edges = cv2.Canny(gray_image, threshold1=100, threshold2=200)
     return edges
 
-# Data Augmentation using ImageDataGenerator
+# --- Data Augmentation ---
 datagen = ImageDataGenerator(
     rotation_range=30,    # Random rotation
     width_shift_range=0.2,  # Random horizontal shift
@@ -64,32 +92,62 @@ for i in range(classes):
 train_data = np.array(train_data)
 train_labels = np.array(train_labels)
 
-# --- Test Data Preprocessing ---
-images_test_path = "./data/Test/"
+# --- Normalization for training data ---
+X_train = train_data.astype('float32') / 255.0
+
+# --- One-Hot Encoding for Training Labels ---
+y_train = np_utils.to_categorical(train_labels, 43)
+
+# Test Data Preprocessing
+images_test_path = "./data/Test/"  # Path to the Test folder
 test_data = []
 test_labels = []
 
 # Loop through the test images
-for img in os.listdir(images_test_path):
-    im = Image.open(images_test_path + '/' + img)
-    im = im.resize((48, 48))  # Resize to 48x48
-    im = np.array(im)
+for index, row in df.iterrows():
+    img_name = row['Path'].strip()  # Strip any leading/trailing whitespace from the Path column
+    label = row['ClassId']  # Assuming 'ClassId' contains the label for each image
     
-    # Apply Red Filter and Edge Detection to test data
-    im_filtered = apply_red_filter(im)
-    im_edges = apply_edge_detection(im)
+    # Construct the full path by joining the Test directory with the image name
+    img_path = os.path.join(images_test_path, img_name)  # Construct the correct full path to the image
     
-    test_data.append(im_filtered)
+    print(f"Constructed img_path: {img_path}")  # Print out to check if path is correct
+
+    # Check if the file exists
+    if os.path.exists(img_path):
+        im = Image.open(img_path)
+        im = im.resize((48, 48))  # Resize to 48x48
+        im = np.array(im)
+        
+        # Apply Red Filter and Edge Detection to test data
+        im_filtered = apply_red_filter(im)
+        im_edges = apply_edge_detection(im)
+        
+        test_data.append(im_filtered)
+        test_labels.append(label)
+    else:
+        print(f"Warning: Image {img_name} not found at {img_path}")
+
+# Check if test data has been successfully loaded
+if len(test_data) == 0:
+    print("Error: No test images found. Exiting...")
+    exit()
 
 test_data = np.array(test_data)
 
+# --- Check if any label exceeds 42 ---
+print("Max label in test_labels:", np.max(test_labels))  # Print the max label value
+print("Min label in test_labels:", np.min(test_labels))  # Print the min label value
+
+# Optionally print the first 20 test labels to inspect them
+print("Test labels sample:", test_labels[:20])
+
 # --- Normalization ---
-X_train = train_data.astype('float32') / 255.0
 X_test = test_data.astype('float32') / 255.0
 
 # --- One-Hot Encoding for Labels ---
-y_train = np_utils.to_categorical(train_labels, 43)
 y_test = np_utils.to_categorical(test_labels, 43)
+
 
 # --- Model Creation ---
 CNN = Sequential()
@@ -108,7 +166,9 @@ CNN.add(Flatten())  # Flatten the output from the Conv layers
 
 # Fully Connected Layers (Dense layers)
 CNN.add(Dense(units=256, activation='relu'))
+CNN.add(Dropout(0.5))  # Dropout layer to avoid overfitting
 CNN.add(Dense(units=128, activation='relu'))
+CNN.add(Dropout(0.5))  # Dropout layer to avoid overfitting
 CNN.add(Dense(units=43, activation='softmax'))  # Output layer (43 classes)
 
 CNN.summary()
@@ -143,4 +203,4 @@ result = CNN.evaluate(X_test, y_test)
 print(f"Test loss: {result[0]}, Test accuracy: {result[1]}")
 
 # --- Save the Model ---
-CNN.save('CNN_TF_Stop_Sign_Improved.keras')
+CNN.save(r"C:\Users\Ricar\Documents\CNN_TF_Stop_Sign_Improved.keras")
