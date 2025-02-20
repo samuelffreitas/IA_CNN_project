@@ -89,8 +89,8 @@ CNN = Sequential([
     Conv2D(32, (3, 3), activation='relu'), MaxPooling2D((2, 2)),
     Conv2D(64, (3, 3), activation='relu'), MaxPooling2D((2, 2)),
     Flatten(),
+    Dense(512, activation='relu'), Dropout(0.5),
     Dense(256, activation='relu'), Dropout(0.5),
-    Dense(128, activation='relu'), Dropout(0.5),
     Dense(43, activation='softmax')
 ])
 
@@ -98,7 +98,7 @@ CNN.compile(loss=focal_loss(), optimizer='adam', metrics=['accuracy'])
 
 # Train Model
 datagen.fit(X_train)
-CNN.fit(datagen.flow(X_train, y_train, batch_size=128), epochs=5)
+CNN.fit(datagen.flow(X_train, y_train, batch_size=128), epochs=15)
 
 # Save Model
 CNN.save(r"C:\Users\Ricar\Documents\CNN_TF_Stop_Sign_Improved.keras")
